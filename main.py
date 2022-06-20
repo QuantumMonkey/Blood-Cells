@@ -6,7 +6,7 @@ With a massive dataset of over 12000 images, we will train a Convolutional Neura
 """
 
 import tensorflow as tf
-#print(tf.__version__)
+# print(tf.__version__)
 
 from keras.layers import Input, Lambda, Dense, Flatten, Conv2D, \
     BatchNormalization, ZeroPadding2D, MaxPooling2D, Activation, add
@@ -47,3 +47,28 @@ plt.imshow(load_img(check_random))
 plt.show()
 
 print(check_random)
+
+
+# Building Kernel
+# Create Identity Block
+def identity_block(input_, kernel_size, filters):
+    f1, f2, f3 = filters
+
+    # Applying filter f1 to x
+    x = Conv2D(f1, (1, 1), kernel_initializer='he_normal')(input_)
+    x = BatchNormalization()(x)
+    x = Activation('relu')(x)
+
+    # Applying filter f2 to x
+    x = Conv2D(f2, kernel_size, padding='same', kernel_initializer='he_normal')(x)
+    x = BatchNormalization()(x)
+    x = Activation('relu')(x)
+
+    # Applying filter f3 to x
+    x = Conv2D(f2, (1, 1), kernel_initializer='he_normal')(input_)
+    x = BatchNormalization()(x)
+
+    x = add([x, input_])
+    x = Activation('relu')(x)
+    return x
+
