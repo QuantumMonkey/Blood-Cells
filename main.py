@@ -15,7 +15,7 @@ from keras.preprocessing import image
 from keras.utils.image_utils import load_img
 from keras.preprocessing.image import ImageDataGenerator
 
-from keras.optimizers import adam_v2 as Adam
+from keras.optimizers.optimizer_v2.adam import Adam
 
 from sklearn.metrics import confusion_matrix
 import numpy as np
@@ -35,17 +35,17 @@ train_path = "Blood Cell Dataset/dataset2-master/images/TRAIN"
 valid_path = "Blood Cell Dataset/dataset2-master/images/TEST"
 
 # Find count of data
-train_files = glob(train_path + '/*/*.jp*g')
+valid_files = glob(train_path + '/*/*.jp*g')
 test_files = glob(valid_path + '/*/*.jp*g')
 
 # Find labels
 folders = glob(train_path + '/*')
 
 # Checking image data randomly
-check_random = np.random.choice(train_files)
+check_random = np.random.choice(valid_files)
 plt.imshow(load_img(check_random))
 plt.title("Random sample")
-plt.show()
+#plt.show()
 
 print(check_random)
 
@@ -168,7 +168,7 @@ for x, y in test_gen:
     print("min: ", x[0].min(), "max: ", x[0].max())
     plt.title(labels[np.argmax(y[0])])
     plt.imshow(x[0])
-    plt.show()
+    #plt.show()
     break
 
 # Define training data and testing data
@@ -187,5 +187,33 @@ valid_generator = val_gen.flow_from_directory(
   class_mode='sparse'
 )
 # Print divided data count/percentage
-print("Training data: ", "{.2f}".format(9957 / (2487 + 9957) * 100), "%")
-print("Testing data: ", "{.2f}".format(2487 / (2487 + 9957) * 100), "%")
+print("Training data: ", "{:.2f}".format(9957 / (2487 + 9957) * 100), "%")
+print("Testing data: ", "{:.2f}".format(2487 / (2487 + 9957) * 100), "%")
+
+# Using Adam optimizer
+model.compile(
+    loss='sparse_categorical_crossentropy',
+    optimizer=Adam(learning_rate=0.0001),
+    metrics=['accuracy']
+)
+
+# Model Fitting
+checkpoint_filepath = '/temp/checkpoint'
+r = model.fit(
+    train_generator,
+    validation_data=valid_generator,
+    epochs=epochs,
+    steps_per_epoch=len(valid_files) // batch_size,
+    validation_steps=len(test_files) // batch_size,
+    callbacks=[
+        tf.keras.callbacks.EarlyStopping(
+            monitor='loss', patience=3, restore_best_weights=True),
+        tf.keras.callbacks.ModelCheckpoint(
+            filepath=checkpoint_filepath,
+            save_weights_only=True,
+            monitor='val_accuracy',
+            mode='max',
+            save_best_only=True),
+    ]
+)
+
