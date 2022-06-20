@@ -32,11 +32,11 @@ batch_size = 128
 
 # Load dataset
 train_path = "Blood Cell Dataset/dataset2-master/images/TRAIN"
-test_path = "Blood Cell Dataset/dataset2-master/images/TEST"
+valid_path = "Blood Cell Dataset/dataset2-master/images/TEST"
 
 # Find count of data
 train_files = glob(train_path + '/*/*.jp*g')
-test_files = glob(test_path + '/*/*.jp*g')
+test_files = glob(valid_path + '/*/*.jp*g')
 
 # Find labels
 folders = glob(train_path + '/*')
@@ -155,7 +155,7 @@ train_gen = ImageDataGenerator(rotation_range=20, width_shift_range=0.1, height_
 val_gen = ImageDataGenerator(preprocessing_function=preprocess_input2)
 
 # Image augmentation using testing data for validation
-test_gen = val_gen.flow_from_directory(test_path, target_size=IMAGE_SIZE, class_mode='sparse')
+test_gen = val_gen.flow_from_directory(valid_path, target_size=IMAGE_SIZE, class_mode='sparse')
 
 # Collect labels for confusion matrix
 print(test_gen.class_indices)
@@ -172,12 +172,20 @@ for x, y in test_gen:
     break
 
 # Define training data and testing data
-train_generator = train_gen.flow_from_directory(train_path, target_size=IMAGE_SIZE, shuffle=True, batch_size=batch_size,
-                                                class_mode='sparse')
-
-test_generator = test_gen.flow_from_directory(test_path, target_size=IMAGE_SIZE, shuffle=True, batch_size=batch_size,
-                                              class_mode='sparse')
-
+train_generator = train_gen.flow_from_directory(
+  train_path,
+  target_size=IMAGE_SIZE,
+  shuffle=True,
+  batch_size=batch_size,
+  class_mode='sparse'
+)
+valid_generator = val_gen.flow_from_directory(
+  valid_path,
+  target_size=IMAGE_SIZE,
+  shuffle=True,
+  batch_size=batch_size,
+  class_mode='sparse'
+)
 # Print divided data count/percentage
 print("Training data: ", "{.2f}".format(9957 / (2487 + 9957) * 100), "%")
 print("Testing data: ", "{.2f}".format(2487 / (2487 + 9957) * 100), "%")
