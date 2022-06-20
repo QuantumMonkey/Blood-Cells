@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 from glob import glob
 
 # Setting the converted image size
-IMG_SIZE = [200, 200]
+IMAGE_SIZE = [224, 224]
 
 # Configuring training
 epochs = 10
@@ -44,83 +44,85 @@ folders = glob(train_path + '/*')
 # Checking image data randomly
 check_random = np.random.choice(train_files)
 plt.imshow(load_img(check_random))
+plt.title("Random sample")
 plt.show()
 
 print(check_random)
 
 
 # Building Kernel - Modified ResNet architecture for this dataset
-# Create Identity Block
-def identity_block(input_, kernel_size, filters):
+def identity_block(input_, kernel_size, filters):  # Create Identity Block
     f1, f2, f3 = filters
-
-    # Applying filter f1 to x
-    x = Conv2D(f1, (1, 1), kernel_initializer='he_normal')(input_)
+    x = Conv2D(f1, (1, 1),
+               kernel_initializer='he_normal'
+               )(input_)
     x = BatchNormalization()(x)
     x = Activation('relu')(x)
-
-    # Applying filter f2 to x
-    x = Conv2D(f2, kernel_size, padding='same', kernel_initializer='he_normal')(x)
+    x = Conv2D(f2, kernel_size, padding='same',
+               kernel_initializer='he_normal'
+               )(x)
     x = BatchNormalization()(x)
     x = Activation('relu')(x)
-
-    # Applying filter f3 to x
-    x = Conv2D(f2, (1, 1), kernel_initializer='he_normal')(input_)
+    x = Conv2D(f3, (1, 1),
+               kernel_initializer='he_normal'
+               )(x)
     x = BatchNormalization()(x)
-
     x = add([x, input_])
     x = Activation('relu')(x)
     return x
 
-
 # Create Convolutional Block
-def conv_block(input_, kernel_size, filters, strides=(2, 2)):
+def conv_block(input_,
+               kernel_size,
+               filters,
+               strides=(2, 2)):
     f1, f2, f3 = filters
-
-    # Applying filter f1 to x
-    x = Conv2D(f1, (1, 1), strides=strides, kernel_initializer='he_normal')(input_)
+    x = Conv2D(f1, (1, 1), strides=strides,
+               kernel_initializer='he_normal'
+               )(input_)
     x = BatchNormalization()(x)
     x = Activation('relu')(x)
-
-    # Applying filter f2 to x
-    x = Conv2D(f2, kernel_size, padding='same', kernel_initializer='he_normal')(input_)
+    x = Conv2D(f2, kernel_size, padding='same',
+               kernel_initializer='he_normal'
+               )(x)
     x = BatchNormalization()(x)
     x = Activation('relu')(x)
-
-    # Applying filter f3 to x
-    x = Conv2D(f3, (1, 1), kernel_initializer='he_normal')(input_)
+    x = Conv2D(f3, (1, 1),
+               kernel_initializer='he_normal'
+               )(x)
     x = BatchNormalization()(x)
-
-    shortcut = Conv2D(f3, (1, 1), strides=strides, kernel_initializer='he_normal')(input_)
+    shortcut = Conv2D(f3, (1, 1), strides=strides,
+                      kernel_initializer='he_normal'
+                      )(input_)
     shortcut = BatchNormalization()(shortcut)
-
     x = add([x, shortcut])
     x = Activation('relu')(x)
     return x
 
-
 # Custom ResNet layer architecture for this dataset
-i = Input(shape=IMG_SIZE + [3])
-
+i = Input(shape=IMAGE_SIZE + [3])
 x = ZeroPadding2D(padding=(3, 3))(i)
-x = Conv2D(64, (7, 7), strides=(2, 2), padding='valid', kernel_initializer='he_normal')
+x = Conv2D(64, (7, 7),
+           strides=(2, 2),
+           padding='valid',
+           kernel_initializer='he_normal'
+           )(x)
 x = BatchNormalization()(x)
 x = Activation('relu')(x)
-
 x = ZeroPadding2D(padding=(1, 1))(x)
 x = MaxPooling2D((3, 3), strides=(2, 2))(x)
-
 x = conv_block(x, 3, [64, 64, 256], strides=(1, 1))
 x = identity_block(x, 3, [64, 64, 256])
 x = identity_block(x, 3, [64, 64, 256])
-
 x = conv_block(x, 3, [128, 128, 512])
 x = identity_block(x, 3, [128, 128, 512])
 x = identity_block(x, 3, [128, 128, 512])
 x = identity_block(x, 3, [128, 128, 512])
-
-# Fully connected layer
 x = Flatten()(x)
+prediction = Dense(
+    len(folders),
+    activation='softmax'
+    )(x)
 
 prediction = Dense(len(folders), activation='softmax')(x)
 
@@ -140,10 +142,10 @@ plot_model(model, to_file='model_plot.png', show_shapes=True, show_layer_names=T
 
 # Image Augmentation
 # Creating instance for ImageDataGenerator
-def preprocess_input2(x):
-    x /= 127.5
-    x -= 1
-    return x
+def preprocess_input2(ppx):
+    ppx /= 127.5
+    ppx -= 1
+    return ppx
 
 
 train_gen = ImageDataGenerator(rotation_range=20, width_shift_range=0.1, height_shift_range=0.1, shear_range=0.1,
@@ -153,7 +155,7 @@ train_gen = ImageDataGenerator(rotation_range=20, width_shift_range=0.1, height_
 val_gen = ImageDataGenerator(preprocessing_function=preprocess_input2)
 
 # Image augmentation using testing data for validation
-test_gen = val_gen.flow_from_directory(test_path, target_size=IMG_SIZE, class_mode='sparse')
+test_gen = val_gen.flow_from_directory(test_path, target_size=IMAGE_SIZE, class_mode='sparse')
 
 # Collect labels for confusion matrix
 print(test_gen.class_indices)
@@ -170,10 +172,12 @@ for x, y in test_gen:
     break
 
 # Define training data and testing data
-train_generator = train_gen.flow_from_directory(train_path, target_size=IMG_SIZE, shuffle=True, batch_size=batch_size, class_mode='sparse')
+train_generator = train_gen.flow_from_directory(train_path, target_size=IMAGE_SIZE, shuffle=True, batch_size=batch_size,
+                                                class_mode='sparse')
 
-test_generator = test_gen.flow_from_directory(test_path, target_size=IMG_SIZE, shuffle=True, batch_size=batch_size, class_mode='sparse')
+test_generator = test_gen.flow_from_directory(test_path, target_size=IMAGE_SIZE, shuffle=True, batch_size=batch_size,
+                                              class_mode='sparse')
 
 # Print divided data count/percentage
-print("Training data: ", "{.2f}".format(9957/(2487+9957)*100), "%")
-print("Testing data: ", "{.2f}".format(2487/(2487+9957)*100), "%")
+print("Training data: ", "{.2f}".format(9957 / (2487 + 9957) * 100), "%")
+print("Testing data: ", "{.2f}".format(2487 / (2487 + 9957) * 100), "%")
