@@ -169,3 +169,11 @@ for x, y in test_gen:
     plt.show()
     break
 
+# Define training data and testing data
+train_generator = train_gen.flow_from_directory(train_path, target_size=IMG_SIZE, shuffle=True, batch_size=batch_size, class_mode='sparse')
+
+test_generator = test_gen.flow_from_directory(test_path, target_size=IMG_SIZE, shuffle=True, batch_size=batch_size, class_mode='sparse')
+
+# Print divided data count/percentage
+print("Training data: ", "{.2f}".format(9957/(2487+9957)*100), "%")
+print("Testing data: ", "{.2f}".format(2487/(2487+9957)*100), "%")
