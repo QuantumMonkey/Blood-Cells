@@ -119,7 +119,7 @@ x = identity_block(x, 3, [128, 128, 512])
 x = identity_block(x, 3, [128, 128, 512])
 x = identity_block(x, 3, [128, 128, 512])
 
-#Fully connected layer
+# Fully connected layer
 x = Flatten()(x)
 
 prediction = Dense(len(folders), activation='softmax')(x)
@@ -134,6 +134,38 @@ model.summary()
 
 # Visualizing the model's structure
 from keras.utils.vis_utils import plot_model
+
 plot_model(model, to_file='model_plot.png', show_shapes=True, show_layer_names=True)
 
+
 # Image Augmentation
+# Creating instance for ImageDataGenerator
+def preprocess_input2(x):
+    x /= 127.5
+    x -= 1
+    return x
+
+
+train_gen = ImageDataGenerator(rotation_range=20, width_shift_range=0.1, height_shift_range=0.1, shear_range=0.1,
+                               zoom_range=0.2, horizontal_flip=True, vertical_flip=True,
+                               preprocessing_function=preprocess_input2)
+
+val_gen = ImageDataGenerator(preprocessing_function=preprocess_input2)
+
+# Image augmentation using testing data for validation
+test_gen = val_gen.flow_from_directory(test_path, target_size=IMG_SIZE, class_mode='sparse')
+
+# Collect labels for confusion matrix
+print(test_gen.class_indices)
+labels = [None] * len(test_gen.class_indices)
+for k, v in test_gen.class_indices.items():
+    labels[v] = k
+
+# View Data
+for x, y in test_gen:
+    print("min: ", x[0].min(), "max: ", x[0].max())
+    plt.title(labels[np.argmax(y[0])])
+    plt.imshow(x[0])
+    plt.show()
+    break
+
