@@ -31,8 +31,8 @@ epochs = 25
 batch_size = 64
 
 # Load dataset
-train_path = "Blood Cell Dataset/dataset2-master/images/TRAIN"
-valid_path = "Blood Cell Dataset/dataset2-master/images/TEST"
+train_path = "Blood Cell Dataset/images/TRAIN"
+valid_path = "Blood Cell Dataset/images/TEST"
 
 # Find count of data
 train_files = glob(train_path + '/*/*.jp*g')
